@@ -1,0 +1,92 @@
+# Copied from default but adapted 
+# or Laravel
+server {
+	listen 80;
+	listen [::]:80;
+
+	# listen to all host identification (catch-all)
+	server_name _;
+
+	# disable identification
+	server_tokens off;
+
+        #root /var/www/testing.museumofthefuture.ae/current/public;
+    	root /var/www/html/public;
+
+	index index.html index.htm index.php;
+
+    	# ---
+	# Security headers
+
+	# Enable cross-site filter (XSS) and tell browser to block detected attacks
+	add_header X-XSS-Protection "1; mode=block";
+
+	# Prevent some browsers from MIME-sniffing a response away from the declared Content-Type
+	add_header X-Content-Type-Options "nosniff";
+
+	# Disallow the site to be rendered within a frame (clickjacking protection)
+	# only allow from the same domain
+	add_header X-Frame-Options "SAMEORIGIN";
+
+	# Set referrer compatible but improved Referrer-Policy
+	# Ref: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy
+	# Ref: https://web.dev/referrer-best-practices/
+	add_header Referrer-Policy "strict-origin-when-cross-origin";
+
+	# Set Feature-Policy for the site
+	# Ref: https://developer.mozilla.org/en-US/docs/Web/HTTP/Feature_Policy
+	# Ref: https://developer.mozilla.org/en-US/docs/Web/HTTP/Feature_Policy/Using_Feature_Policy
+	add_header Feature-Policy "autoplay 'self'; picture-in-picture 'self'";
+
+	# Try local files first, then pass through PHP
+	location / {
+		try_files $uri $uri/ /index.php?$query_string;
+	}
+
+	error_page 404 /index.php;
+
+	location = /favicon.ico { access_log off; log_not_found off; }
+	location = /robots.txt  { access_log off; log_not_found off; }
+
+	# ---
+	# Caching assets
+
+	# Media: images, icons, SVG, manifest
+	location ~* \.(?:jpg|jpeg|gif|png|ico|svg|webmanifest)$ {
+		expires 1d;
+		access_log off;
+		add_header Cache-Control "public";
+	}
+
+	# Media: fonts
+	location ~* \.(?:woff|woff2)$ {
+		expires 1y;
+		access_log off;
+		add_header Cache-Control "public";
+	}
+
+	# Assets: CSS, JS
+	location ~* \.(?:css|js)$ {
+		expires 1y;
+		access_log off;
+		add_header Cache-Control "public";
+   	}
+
+	# pass PHP scripts to FastCGI server
+	#
+	location ~ \.php$ {
+        	fastcgi_split_path_info ^(.+\.php)(/.+)$;
+
+		# Mitigate https://httpoxy.org/ vulnerabilities
+		fastcgi_param HTTP_PROXY "";
+
+		#fastcgi_pass unix:/run/php/php-fpm.sock;
+		fastcgi_pass php:9000;
+		fastcgi_index index.php;
+
+		include fastcgi_params;
+        	fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        	fastcgi_param PATH_INFO $fastcgi_path_info;
+	}
+
+}

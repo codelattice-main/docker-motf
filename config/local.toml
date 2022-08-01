@@ -1,0 +1,29 @@
+debug = falselogLevel = "ERROR"
+defaultEntryPoints = ["https","http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+    entryPoint = "https"
+  [entryPoints.https]
+  address = ":443"
+  [entryPoints.https.tls]
+
+[retry]
+
+[file]
+  filename = "nginx.toml"
+  watch = truei
+
+
+[acme]
+email = "my.mail@mydomain.com"
+caServer = "https://acme-v02.api.letsencrypt.org/directory"
+storage = "acme.json"
+entryPoint = "https"
+onHostRule = true
+
+[acme.httpChallenge]
+entryPoint = "http"
+

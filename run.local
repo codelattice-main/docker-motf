@@ -1,0 +1,50 @@
+#! /bin/bash 
+
+echo "Run and Build Website" 
+docker-compose up -d --build site 
+
+echo "Prepare the website build" 
+docker-compose run --rm npm ci --only=production
+docker-compose run --rm npm run production
+
+echo "Install Reuqired Packages"
+docker-compose run --rm composer install --prefer-dist --no-scripts --no-dev --optimize-autoloader --no-ansi
+
+echo "Run NPM" 
+docker-compose run --rm npm ci --only=production
+
+echo "Install Laravel and Predis"
+docker-compose run --rm composer require laravel/envoy --dev
+docker-compose run --rm composer require predis/predis 
+
+
+
+echo "Install Reuqired Packages"
+#docker-compose run --rm composer install --prefer-dist --no-scripts --no-dev --optimize-autoloader --no-ansi
+docker-compose run --rm composer install --prefer-dist --no-scripts --no-dev -o
+docker-compose run --rm composer update barryvdh/laravel-debugbar
+
+echo "Skipping NPM Install" 
+
+echo "Assets Generate "
+docker-compose run --rm npm ci --only=production
+
+
+echo "Clearining Running Artisan For Website" 
+docker-compose run --rm artisan config:clear
+docker-compose run --rm  artisan cache:clear
+docker-compose run --rm artisan route:clear
+docker-compose run --rm artisan view:clear
+docker-compose run --rm artisan cache:invalidate-cloudfront
+
+echo "Creating Cache"
+docker-compose run --rm artisan config:cache 
+docker-compose run --rm artisan route:cache
+docker-compose run --rm artisan view:cache
+
+echo "Updating Twill" 
+#docker-compose run --rm artisan twill:update
+
+
+echo "Copying Horizon Assets" 
+docker-compose run --rm artisan horizon:publish 

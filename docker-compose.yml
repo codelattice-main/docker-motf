@@ -1,0 +1,80 @@
+version: '3'
+
+networks:
+  motfweb:
+
+services:
+  site:
+    build:
+      context: ./nginx
+      dockerfile: nginx.dockerfile
+    container_name: nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      - php
+      - redis
+    networks:
+      - motfweb
+
+  php:
+    build:
+      context: ./php
+      dockerfile: php.dockerfile
+    container_name: php
+    volumes:
+      - ./src:/var/www/html
+    networks:
+      - motfweb
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    networks:
+      - motfweb
+
+  composer:
+    build:
+      context: ./composer
+      dockerfile: composer.dockerfile
+    container_name: composer
+    volumes:
+      - ./src:/var/www/html
+    working_dir: /var/www/html
+    user: root
+    depends_on:
+      - php
+    entrypoint: ['composer', '--ignore-platform-reqs']
+    networks:
+      - motfweb
+
+  npm:
+    image: node:13.7
+    container_name: npm
+    volumes:
+      - ./src:/var/www/html
+    ports:
+      - 3000:3000
+      - 3001:3001
+    working_dir: /var/www/html
+    entrypoint: ['npm']
+    networks:
+      - motfweb
+
+  artisan:
+    build:
+      context: ./php
+      dockerfile: php.dockerfile
+    container_name: artisan
+    volumes:
+      - ./src:/var/www/html
+    working_dir: /var/www/html
+    entrypoint: ['php', '/var/www/html/']
+    networks:
+      - motfweb

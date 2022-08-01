@@ -1,0 +1,60 @@
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+        worker_connections 768;
+        # multi_accept on;
+}
+
+
+http {
+
+	upstream php {
+  		server twill:9000;
+	}
+
+
+
+server {
+#	root /var/www/html/public;
+#        listen 80;
+        index index.php index.html;
+        server_name testing.museumofthefuture.ae;
+	server_tokens off;
+            set $yii_bootstrap "index.php";
+
+
+	index index.html index.htm index.php;
+
+	add_header X-XSS-Protection "1; mode=block";
+
+	add_header X-Content-Type-Options "nosniff";
+
+	add_header X-Frame-Options "SAMEORIGIN";
+
+	add_header Referrer-Policy "strict-origin-when-cross-origin";
+
+	add_header Feature-Policy "autoplay 'self'; picture-in-picture 'self'";
+
+	location = /favicon.ico { access_log off; log_not_found off; }
+	location = /robots.txt  { access_log off; log_not_found off; }
+
+
+
+	location / {
+                                        include fastcgi_params;
+                                        fastcgi_param  SCRIPT_FILENAME  /var/www/html/public$fastcgi_script_name;
+                                        fastcgi_pass          twill:9000;
+
+		        location ~* \.php$ {
+            				include fastcgi_params;
+					fastcgi_param  SCRIPT_FILENAME  /var/www/html/public$fastcgi_script_name;
+      					fastcgi_pass          twill:9000;
+        		}
+
+        	}
+	
+	}
+
+ }

@@ -1,0 +1,34 @@
+debug = false
+
+logLevel = "ERROR"
+
+defaultEntryPoints = ["https","http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+    entryPoint = "https"
+  [entryPoints.https]
+  address = ":443"
+  [entryPoints.https.tls]
+
+[retry]
+
+[docker]
+	endpoint = "unix:///var/run/docker.sock"
+	domain = "museumofthefuture.ae"
+	watch = true
+	exposedByDefault = false
+
+[acme]
+  email = "faisal.nizam@museumofthefuture.ae"
+  caServer = "https://acme-v02.api.letsencrypt.org/directory"
+  storage = "acme.json"
+  entryPoint = "https"
+  onHostRule = true
+  [[acme.domains]]
+    main = "museumofthefuture.ae"
+    sans = ["staging.museumofthefuture.ae", "test.museumofthefuture.ae"]
+  [acme.httpChallenge]
+    entryPoint = "http"
